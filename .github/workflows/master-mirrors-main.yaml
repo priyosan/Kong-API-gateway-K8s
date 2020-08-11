@@ -13,4 +13,8 @@ jobs:
       uses: actions/checkout@v2
     - name: Push master
       # Deliberately not force-pushing: designed to fail if this would mean rewriting history
-      run: git push origin refs/remotes/origin/ci/move-master:refs/heads/ci/move-master-test
+      run: |
+        git log --graph --oneline --all
+        git fetch
+        git log --graph --oneline --all
+        git push origin refs/remotes/origin/ci/move-master:refs/heads/ci/move-master-test
