@@ -1,4 +1,4 @@
-name: 'master mirrors main'
+name: 'master mirrors this branch'
 
 on:
   push:
@@ -11,10 +11,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Push master
+      with:
+        fetch-depth: 0
+    - name: Push HEAD to master
       # Deliberately not force-pushing: designed to fail if this would mean rewriting history
       run: |
-        git log --graph --oneline --all
-        git fetch
-        git log --graph --oneline --all
-        git push origin refs/remotes/origin/ci/move-master:refs/heads/ci/move-master-test
+        git push origin HEAD:ci/move-master-test
