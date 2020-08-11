@@ -1,0 +1,16 @@
+name: 'master mirrors main'
+
+on:
+  push:
+    branches:
+      - 'ci/move-master'
+
+jobs:
+  reattach-master:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Push master
+      # Deliberately not force-pushing: designed to fail if this would mean rewriting history
+      run: git push origin refs/remotes/origin/ci/move-master:refs/heads/ci/move-master-test
