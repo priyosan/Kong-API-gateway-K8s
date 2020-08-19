@@ -18,6 +18,7 @@ package store
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/annotations"
 	configurationv1 "github.com/kong/kubernetes-ingress-controller/pkg/apis/configuration/v1"
@@ -391,8 +392,8 @@ func (s Store) networkingIngressV1Beta1(obj interface{}) *networking.Ingress {
 	}
 	extensionsIngress, okExtension := obj.(*extensions.Ingress)
 	if !okExtension {
-		s.logger.Errorf("ingress resource can not be casted to extensions.Ingress" +
-			" or networking.Ingress")
+		s.logger.Errorf("ingress resource can not be casted to extensions.Ingress"+
+			" or networking.Ingress: got %v", reflect.TypeOf(obj))
 		return nil
 	}
 	networkingIngress = &networking.Ingress{}
