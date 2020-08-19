@@ -43,7 +43,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/flowcontrol"
-	knativeClientSet "knative.dev/serving/pkg/client/clientset/versioned"
+	knativeClientSet "knative.dev/networking/pkg/client/clientset/versioned"
 )
 
 // Kong Represents a Kong client and connection information

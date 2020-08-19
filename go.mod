@@ -12,9 +12,7 @@ require (
 	github.com/kong/deck v1.2.1
 	github.com/kong/go-kong v0.13.0
 	github.com/lithammer/dedent v1.1.0
-	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a // indirect
 	github.com/mitchellh/mapstructure v1.3.1
-	github.com/openzipkin/zipkin-go v0.2.2 // indirect
 	github.com/prometheus/client_golang v1.7.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/pflag v1.0.5
@@ -29,10 +27,12 @@ require (
 	k8s.io/apimachinery v0.19.0-rc.4
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
 	k8s.io/klog v1.0.0
-	knative.dev/pkg v0.0.0-20200711004937-22502028e31a
-	knative.dev/serving v0.12.1
+	knative.dev/networking v0.0.0-20200818151513-77f604177dc7
+	knative.dev/pkg v0.0.0-20200818021113-c451e3c37f5f
 )
 
 replace k8s.io/client-go => k8s.io/client-go v0.19.0-rc.4
 
 replace knative.dev/pkg => github.com/mflendrich/pkg v0.0.0-20200818133434-fa27c4a25760
+
+replace knative.dev/networking => github.com/mflendrich/networking v0.0.0-20200819130436-7f8774d24d58

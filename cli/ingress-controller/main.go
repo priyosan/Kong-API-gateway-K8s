@@ -60,8 +60,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/klog"
-	knativeclient "knative.dev/serving/pkg/client/clientset/versioned"
-	knativeinformer "knative.dev/serving/pkg/client/informers/externalversions"
+	knativeclient "knative.dev/networking/pkg/client/clientset/versioned"
+	knativeinformer "knative.dev/networking/pkg/client/informers/externalversions"
 )
 
 var (
@@ -171,7 +171,7 @@ func main() {
 		if err != nil {
 			log.Fatalf(invalidConfErrPrefix+"publish-service: %v", err)
 		}
-		_, err = kubeClient.CoreV1().Services(ns).Get(name, metav1.GetOptions{})
+		_, err = kubeClient.CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			log.WithFields(logrus.Fields{
 				"service_name":      name,
@@ -181,7 +181,7 @@ func main() {
 	}
 
 	if cliConfig.WatchNamespace != "" {
-		_, err = kubeClient.CoreV1().Namespaces().Get(cliConfig.WatchNamespace,
+		_, err = kubeClient.CoreV1().Namespaces().Get(context.TODO(), cliConfig.WatchNamespace,
 			metav1.GetOptions{})
 		if err != nil {
 			log.Fatalf("failed to fetch watch-namespace '%s': %v", cliConfig.WatchNamespace, err)
