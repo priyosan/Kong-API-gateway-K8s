@@ -33,6 +33,6 @@ require (
 
 replace k8s.io/client-go => k8s.io/client-go v0.19.0-rc.4
 
-replace knative.dev/pkg => github.com/mflendrich/pkg v0.0.0-20200818133434-fa27c4a25760
+replace knative.dev/pkg => github.com/mflendrich/pkg v0.0.0-20200820125340-3493cae5c655
 
-replace knative.dev/networking => github.com/mflendrich/networking v0.0.0-20200819130436-7f8774d24d58
+replace knative.dev/networking => github.com/mflendrich/networking v0.0.0-20200820130121-b71940c64af7
