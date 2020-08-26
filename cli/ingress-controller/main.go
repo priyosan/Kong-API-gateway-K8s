@@ -47,6 +47,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -315,6 +316,16 @@ func main() {
 		log.Fatalf("serverHasGVK failed: %v", err)
 	}
 
+	controllerConfig.UseNetworkingV1, err = serverHasGVK(
+		kubeClient, networkingv1.SchemeGroupVersion.String(), "Ingress")
+	if err != nil {
+		log.Fatalf("serverHasGVK failed: %v", err)
+	}
+
+	log.Infof("networking.k8s.io Ingress APIs supported by apiserver: v1beta1? %t; v1? %t",
+		controllerConfig.UseNetworkingV1beta1,
+		controllerConfig.UseNetworkingV1)
+
 	coreInformerFactory := informers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
 		cliConfig.SyncPeriod,
@@ -367,6 +378,11 @@ func main() {
 	ingV1beta1Informer.AddEventHandler(reh)
 	cacheStores.IngressV1beta1 = ingV1beta1Informer.GetStore()
 	informers = append(informers, ingV1beta1Informer)
+
+	ingV1Informer := coreInformerFactory.Networking().V1().Ingresses().Informer()
+	ingV1Informer.AddEventHandler(reh)
+	cacheStores.IngressV1 = ingV1Informer.GetStore()
+	informers = append(informers, ingV1Informer)
 
 	endpointsInformer := coreInformerFactory.Core().V1().Endpoints().Informer()
 	endpointsInformer.AddEventHandler(controller.EndpointsEventHandler{

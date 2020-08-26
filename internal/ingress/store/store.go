@@ -94,6 +94,7 @@ type Store struct {
 // the Ingress Controller reads.
 type CacheStores struct {
 	IngressV1beta1 cache.Store
+	IngressV1      cache.Store
 	TCPIngress     cache.Store
 	Service        cache.Store
 	Secret         cache.Store

@@ -89,6 +89,7 @@ type Configuration struct {
 	ElectionID             string
 
 	UseNetworkingV1beta1        bool
+	UseNetworkingV1             bool
 	EnableKnativeIngressSupport bool
 
 	Logger logrus.FieldLogger
