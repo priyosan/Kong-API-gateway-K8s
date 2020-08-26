@@ -64,7 +64,7 @@ type Storer interface {
 	GetKongClusterPlugin(name string) (*configurationv1.KongClusterPlugin, error)
 	GetKongConsumer(namespace, name string) (*configurationv1.KongConsumer, error)
 
-	ListIngresses() []*networkingv1beta1.Ingress
+	ListIngressesV1beta1() []*networkingv1beta1.Ingress
 	ListTCPIngresses() ([]*configurationv1beta1.TCPIngress, error)
 	ListKnativeIngresses() ([]*knative.Ingress, error)
 	ListGlobalKongPlugins() ([]*configurationv1.KongPlugin, error)
@@ -93,11 +93,11 @@ type Store struct {
 // CacheStores stores cache.Store for all Kinds of k8s objects that
 // the Ingress Controller reads.
 type CacheStores struct {
-	Ingress    cache.Store
-	TCPIngress cache.Store
-	Service    cache.Store
-	Secret     cache.Store
-	Endpoint   cache.Store
+	IngressV1beta1 cache.Store
+	TCPIngress     cache.Store
+	Service        cache.Store
+	Secret         cache.Store
+	Endpoint       cache.Store
 
 	Plugin        cache.Store
 	ClusterPlugin cache.Store
@@ -145,11 +145,11 @@ func (s Store) GetService(namespace, name string) (*apiv1.Service, error) {
 	return service.(*apiv1.Service), nil
 }
 
-// ListIngresses returns the list of Ingresses
-func (s Store) ListIngresses() []*networkingv1beta1.Ingress {
+// ListIngressesV1beta1 returns the list of networking.k8s.io/v1beta1 Ingresses
+func (s Store) ListIngressesV1beta1() []*networkingv1beta1.Ingress {
 	// filter ingress rules
 	var ingresses []*networkingv1beta1.Ingress
-	for _, item := range s.stores.Ingress.List() {
+	for _, item := range s.stores.IngressV1beta1.List() {
 		ing := s.networkingIngressV1Beta1(item)
 		if !s.isValidIngresClass(&ing.ObjectMeta) {
 			continue

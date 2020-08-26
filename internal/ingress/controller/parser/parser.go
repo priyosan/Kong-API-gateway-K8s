@@ -143,7 +143,7 @@ func New(store store.Storer, logger logrus.FieldLogger) Parser {
 // It throws an error if there is an error returned from client-go.
 func (p *Parser) Build() (*KongState, error) {
 	var state KongState
-	ings := p.store.ListIngresses()
+	ings := p.store.ListIngressesV1beta1()
 	tcpIngresses, err := p.store.ListTCPIngresses()
 	if err != nil {
 		p.Logger.Errorf("failed to list TCPIngresses: %v", err)

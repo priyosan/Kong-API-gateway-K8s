@@ -149,7 +149,7 @@ func TestFakeStoreIngress(t *testing.T) {
 	store, err := NewFakeStore(FakeObjects{Ingresses: ingresses})
 	assert.Nil(err)
 	assert.NotNil(store)
-	assert.Len(store.ListIngresses(), 1)
+	assert.Len(store.ListIngressesV1beta1(), 1)
 }
 
 func TestFakeStoreListTCPIngress(t *testing.T) {

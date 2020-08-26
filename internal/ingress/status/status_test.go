@@ -234,7 +234,9 @@ func buildExtensionsIngresses() []networking.Ingress {
 type testIngressLister struct {
 }
 
-func (til *testIngressLister) ListIngresses() []*networking.Ingress {
+var _ ingressLister = &testIngressLister{}
+
+func (til *testIngressLister) ListIngressesV1beta1() []*networking.Ingress {
 	var ingresses []*networking.Ingress
 	ingresses = append(ingresses, &networking.Ingress{
 		ObjectMeta: metav1.ObjectMeta{

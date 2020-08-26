@@ -57,8 +57,8 @@ type Sync interface {
 }
 
 type ingressLister interface {
-	// ListIngresses returns the list of Ingresses
-	ListIngresses() []*networking.Ingress
+	// ListIngressesV1beta1 returns the list of Ingresses
+	ListIngressesV1beta1() []*networking.Ingress
 	ListTCPIngresses() ([]*configurationv1beta1.TCPIngress, error)
 	ListKnativeIngresses() ([]*knative.Ingress, error)
 }
@@ -310,7 +310,7 @@ func sliceToStatus(endpoints []string) []apiv1.LoadBalancerIngress {
 
 // updateStatus changes the status information of Ingress rules
 func (s *statusSync) updateStatus(ctx context.Context, newIngressPoint []apiv1.LoadBalancerIngress) {
-	ings := s.IngressLister.ListIngresses()
+	ings := s.IngressLister.ListIngressesV1beta1()
 	tcpIngresses, err := s.IngressLister.ListTCPIngresses()
 	if err != nil {
 		s.Logger.Errorf("failed to list TPCIngresses: %v", err)

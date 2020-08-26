@@ -357,16 +357,16 @@ func main() {
 	var informers []cache.SharedIndexInformer
 	var cacheStores store.CacheStores
 
-	var ingInformer cache.SharedIndexInformer
+	var ingV1beta1Informer cache.SharedIndexInformer
 	if controllerConfig.UseNetworkingV1beta1 {
-		ingInformer = coreInformerFactory.Networking().V1beta1().Ingresses().Informer()
+		ingV1beta1Informer = coreInformerFactory.Networking().V1beta1().Ingresses().Informer()
 	} else {
-		ingInformer = coreInformerFactory.Extensions().V1beta1().Ingresses().Informer()
+		ingV1beta1Informer = coreInformerFactory.Extensions().V1beta1().Ingresses().Informer()
 	}
 
-	ingInformer.AddEventHandler(reh)
-	cacheStores.Ingress = ingInformer.GetStore()
-	informers = append(informers, ingInformer)
+	ingV1beta1Informer.AddEventHandler(reh)
+	cacheStores.IngressV1beta1 = ingV1beta1Informer.GetStore()
+	informers = append(informers, ingV1beta1Informer)
 
 	endpointsInformer := coreInformerFactory.Core().V1().Endpoints().Informer()
 	endpointsInformer.AddEventHandler(controller.EndpointsEventHandler{

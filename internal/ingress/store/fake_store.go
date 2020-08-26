@@ -127,11 +127,11 @@ func NewFakeStore(
 
 	s = Store{
 		stores: CacheStores{
-			Ingress:    ingressStore,
-			TCPIngress: tcpIngressStore,
-			Service:    serviceStore,
-			Endpoint:   endpointStore,
-			Secret:     secretsStore,
+			IngressV1beta1: ingressStore,
+			TCPIngress:     tcpIngressStore,
+			Service:        serviceStore,
+			Endpoint:       endpointStore,
+			Secret:         secretsStore,
 
 			Plugin:        kongPluginsStore,
 			ClusterPlugin: kongClusterPluginsStore,

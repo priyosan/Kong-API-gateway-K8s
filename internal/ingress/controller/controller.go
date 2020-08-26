@@ -113,7 +113,7 @@ func (n *KongController) syncIngress(interface{}) error {
 	}
 
 	// Sort ingress rules using the ResourceVersion field
-	ings := n.store.ListIngresses()
+	ings := n.store.ListIngressesV1beta1()
 	sort.SliceStable(ings, func(i, j int) bool {
 		ir := ings[i].ResourceVersion
 		jr := ings[j].ResourceVersion
