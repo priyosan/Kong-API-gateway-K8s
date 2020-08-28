@@ -5,6 +5,7 @@ import (
 
 	"github.com/kong/go-kong/kong"
 	configurationv1 "github.com/kong/kubernetes-ingress-controller/pkg/apis/configuration/v1"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -79,6 +80,22 @@ func (c *Consumer) setCredential(log logrus.FieldLogger, credType string, credCo
 		c.ACLGroups = append(c.ACLGroups, &cred)
 	default:
 		return fmt.Errorf("invalid credential type: '%v'", credType)
+	}
+	return nil
+}
+
+func decodeCredential(credConfig interface{},
+	credStructPointer interface{}) error {
+	decoder, err := mapstructure.NewDecoder(
+		&mapstructure.DecoderConfig{TagName: "json",
+			Result: credStructPointer,
+		})
+	if err != nil {
+		return fmt.Errorf("failed to create a decoder: %w", err)
+	}
+	err = decoder.Decode(credConfig)
+	if err != nil {
+		return fmt.Errorf("failed to decode credential: %w", err)
 	}
 	return nil
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/utils"
 	configurationv1 "github.com/kong/kubernetes-ingress-controller/pkg/apis/configuration/v1"
 	configurationv1beta1 "github.com/kong/kubernetes-ingress-controller/pkg/apis/configuration/v1beta1"
-	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
@@ -199,22 +198,6 @@ func getCACerts(log logrus.FieldLogger, s store.Storer) ([]kong.CACertificate, e
 	}
 
 	return caCerts, nil
-}
-
-func decodeCredential(credConfig interface{},
-	credStructPointer interface{}) error {
-	decoder, err := mapstructure.NewDecoder(
-		&mapstructure.DecoderConfig{TagName: "json",
-			Result: credStructPointer,
-		})
-	if err != nil {
-		return fmt.Errorf("failed to create a decoder: %w", err)
-	}
-	err = decoder.Decode(credConfig)
-	if err != nil {
-		return fmt.Errorf("failed to decode credential: %w", err)
-	}
-	return nil
 }
 
 func knativeIngressToNetworkingTLS(tls []knative.IngressTLS) []networking.IngressTLS {
