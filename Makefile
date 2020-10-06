@@ -1,8 +1,10 @@
 REGISTRY?=kong-docker-kubernetes-ingress-controller.bintray.io
+REDHAT_REGISTRY?=scan.connect.redhat.com/ospid-f8304390-ff4c-4b7f-8c7e-1ed13370b3c2
 TAG?=1.0.0
 REPO_INFO=$(shell git config --get remote.origin.url)
 IMGNAME?=kong-ingress-controller
 IMAGE = $(REGISTRY)/$(IMGNAME)
+REDHAT_IMAGE = $(REDHAT_REGISTRY)/$(IMGNAME)
 # only for dev
 DB?=false
 RUN_VERSION?=20
@@ -53,7 +55,7 @@ redhat-container:
     --build-arg TAG=${TAG} --build-arg COMMIT=${COMMIT} \
     --build-arg REPO_INFO=${REPO_INFO} \
 	-f RedHatDockerfile \
-    -t ${IMAGE}:${TAG} .
+    -t ${REDHAT_IMAGE}:${TAG} .
 
 .PHONY: run
 run:
