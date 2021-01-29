@@ -27,21 +27,30 @@ make without coding:
 - Providing your feedback on the proposed features and designs
 - Reviewing Pull Requests
 
-If you wish to contribute code (features or bug fixes), see the [Submitting a
-patch](#submitting-a-patch) section.
+If you wish to contribute code (features or bug fixes) please keep in mind the following:
+
+- bug fix pull requests should be opened against `main` as the base branch
+- feature pull requests should be opened with `next` as the base branch
+
+## Stale issue and pull request policy
+
+To ensure our backlog is organized and up to date, we will close issues and
+pull requests that have been inactive awaiting a community response for over 2
+weeks. If you wish to reopen a closed issue or PR to continue work, please
+leave a comment asking a team member to do so.
 
 ## Development environment
 
 ## Environment
 
-- Golang version >= 1.12 installed
+- Golang version matching our [`Dockerfile`](./Dockerfile) installed
 - Access to a k8s cluster, you can use Minikube or GKE
 - make
 - Docker (for building)
 
 ## Dependencies
 
-The build uses dependencies are managed by [go modules](https://blog.golang.org/using-go-modules) 
+The build uses dependencies are managed by [go modules](https://blog.golang.org/using-go-modules)
 
 ## Running in dev mode
 
@@ -115,7 +124,7 @@ Note: replace `docker.example.com/registry` with your registry URL.
 ## Deploying
 
 There are several ways to deploy Kong Ingress Controller onto a cluster.
-Please check the [deployment guide](/docs/deployment/README.md)
+Please check the [deployment guide](https://docs.konghq.com/kubernetes-ingress-controller/latest/deployment/overview/).
 
 ## Testing
 
@@ -125,6 +134,8 @@ To run unit-tests, just run
 $ cd $GOPATH/src/github.com/kong/kubernetes-ingress-controller
 $ make test
 ```
+
+To run integration tests, see the [integration test readme](test/integration/README.md).
 
 ## Releasing
 

@@ -30,8 +30,8 @@ func (ia IngressAPI) String() string {
 	return "unknown API"
 }
 
-// serverHasGVK returns true iff the Kubernetes API server supports the given resource kind at the given group-version.
-func serverHasGVK(client discovery.ServerResourcesInterface, groupVersion, kind string) (bool, error) {
+// ServerHasGVK returns true iff the Kubernetes API server supports the given resource kind at the given group-version.
+func ServerHasGVK(client discovery.ServerResourcesInterface, groupVersion, kind string) (bool, error) {
 	list, err := client.ServerResourcesForGroupVersion(groupVersion)
 	if err != nil {
 		return false, err
@@ -47,8 +47,12 @@ func serverHasGVK(client discovery.ServerResourcesInterface, groupVersion, kind 
 
 func NegotiateResourceAPI(client discovery.ServerResourcesInterface, kind string, allowedVersions []IngressAPI,
 ) (IngressAPI, error) {
+	// BUG: If the server does not know the `candidate` group/version at all, ServerHasGVK returns error, which interrupts
+	// the search, instead of passing over that `candidate`. This impacts Kubernetes <1.14. Workaround is to remove APIs
+	// newer than the newest one supported by apiserver from allowedVersions.
+	// Context: https://github.com/Kong/kubernetes-ingress-controller/issues/918
 	for _, candidate := range allowedVersions {
-		if ok, err := serverHasGVK(client, candidate.String(), kind); err != nil {
+		if ok, err := ServerHasGVK(client, candidate.String(), kind); err != nil {
 			return OtherAPI, err
 		} else if ok {
 			return candidate, nil

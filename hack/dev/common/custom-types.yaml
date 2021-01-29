@@ -245,6 +245,10 @@ spec:
                 - tls
             https_redirect_status_code:
               type: integer
+            snis:
+              type: array
+              items:
+                type: string
         proxy:
           type: object
           properties:
@@ -375,8 +379,6 @@ spec:
     type: date
     description: Age
     JSONPath: .metadata.creationTimestamp
-  subresources:
-    status: {}
   validation:
     openAPIV3Schema:
       properties:
