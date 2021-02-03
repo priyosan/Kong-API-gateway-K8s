@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/kong/go-kong/kong"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/annotations"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/controller/parser/util"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/store"
 	configurationv1 "github.com/kong/kubernetes-ingress-controller/pkg/apis/configuration/v1"
+	"github.com/kong/kubernetes-ingress-controller/pkg/ingress/annotations"
+	"github.com/kong/kubernetes-ingress-controller/pkg/ingress/controller/parser/util"
+	"github.com/kong/kubernetes-ingress-controller/pkg/ingress/store"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 )

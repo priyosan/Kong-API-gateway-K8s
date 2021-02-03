@@ -32,8 +32,8 @@ import (
 	testclient "k8s.io/client-go/kubernetes/fake"
 	knative "knative.dev/networking/pkg/apis/networking/v1alpha1"
 
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/task"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/utils"
+	"github.com/kong/kubernetes-ingress-controller/pkg/ingress/task"
+	"github.com/kong/kubernetes-ingress-controller/pkg/ingress/utils"
 )
 
 func buildLoadBalancerIngressByIP() []apiv1.LoadBalancerIngress {

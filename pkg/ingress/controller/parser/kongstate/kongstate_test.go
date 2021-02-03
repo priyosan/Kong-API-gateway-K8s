@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/kong/go-kong/kong"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/annotations"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/controller/parser/util"
 	configurationv1 "github.com/kong/kubernetes-ingress-controller/pkg/apis/configuration/v1"
+	"github.com/kong/kubernetes-ingress-controller/pkg/ingress/annotations"
+	"github.com/kong/kubernetes-ingress-controller/pkg/ingress/controller/parser/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
