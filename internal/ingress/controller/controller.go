@@ -26,6 +26,7 @@ import (
 	"github.com/blang/semver"
 	"github.com/eapache/channels"
 	"github.com/kong/go-kong/kong"
+	"github.com/kong/kubernetes-ingress-controller/internal/ingress/controller/deckgen"
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/election"
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/status"
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/task"
@@ -143,7 +144,7 @@ func NewKongController(ctx context.Context,
 		updateCh: updateCh,
 
 		stopLock:          &sync.Mutex{},
-		PluginSchemaStore: *NewPluginSchemaStore(config.Kong.Client),
+		PluginSchemaStore: *deckgen.NewPluginSchemaStore(config.Kong.Client),
 
 		Logger: config.Logger,
 	}
@@ -228,7 +229,7 @@ type KongController struct {
 
 	store store.Storer
 
-	PluginSchemaStore PluginSchemaStore
+	PluginSchemaStore deckgen.PluginSchemaStore
 
 	Logger logrus.FieldLogger
 }

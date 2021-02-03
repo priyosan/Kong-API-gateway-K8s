@@ -24,8 +24,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"sort"
-	"strings"
 
 	"github.com/kong/deck/diff"
 	"github.com/kong/deck/dump"
@@ -33,7 +31,7 @@ import (
 	"github.com/kong/deck/solver"
 	"github.com/kong/deck/state"
 	deckutils "github.com/kong/deck/utils"
-	"github.com/kong/go-kong/kong"
+	"github.com/kong/kubernetes-ingress-controller/internal/ingress/controller/deckgen"
 	"github.com/kong/kubernetes-ingress-controller/pkg/kongstate"
 	"github.com/kong/kubernetes-ingress-controller/pkg/util"
 )
@@ -42,7 +40,7 @@ import (
 // returning nil implies the synchronization finished correctly.
 // Returning an error means requeue the update.
 func (n *KongController) OnUpdate(ctx context.Context, state *kongstate.KongState) error {
-	targetContent := n.toDeckContent(ctx, state)
+	targetContent := deckgen.ToDeckContent(ctx, n.Logger, state, n.getIngressControllerTags(), &n.PluginSchemaStore)
 
 	var customEntities []byte
 	var err error
@@ -290,231 +288,4 @@ func (n *KongController) getIngressControllerTags() []string {
 		res = append(res, n.cfg.Kong.FilterTags...)
 	}
 	return res
-}
-
-func (n *KongController) toDeckContent(
-	ctx context.Context,
-	k8sState *kongstate.KongState) *file.Content {
-	var content file.Content
-	content.FormatVersion = "1.1"
-	var err error
-
-	for _, s := range k8sState.Services {
-		service := file.FService{Service: s.Service}
-		for _, p := range s.Plugins {
-			plugin := file.FPlugin{
-				Plugin: *p.DeepCopy(),
-			}
-			err = n.fillPlugin(ctx, &plugin)
-			if err != nil {
-				n.Logger.Errorf("failed to fill-in defaults for plugin: %s", *plugin.Name)
-			}
-			service.Plugins = append(service.Plugins, &plugin)
-			sort.SliceStable(service.Plugins, func(i, j int) bool {
-				return strings.Compare(*service.Plugins[i].Name, *service.Plugins[j].Name) > 0
-			})
-		}
-
-		for _, r := range s.Routes {
-			route := file.FRoute{Route: r.Route}
-			n.fillRoute(&route.Route)
-
-			for _, p := range r.Plugins {
-				plugin := file.FPlugin{
-					Plugin: *p.DeepCopy(),
-				}
-				err = n.fillPlugin(ctx, &plugin)
-				if err != nil {
-					n.Logger.Errorf("failed to fill-in defaults for plugin: %s", *plugin.Name)
-				}
-				route.Plugins = append(route.Plugins, &plugin)
-				sort.SliceStable(route.Plugins, func(i, j int) bool {
-					return strings.Compare(*route.Plugins[i].Name, *route.Plugins[j].Name) > 0
-				})
-			}
-			service.Routes = append(service.Routes, &route)
-		}
-		sort.SliceStable(service.Routes, func(i, j int) bool {
-			return strings.Compare(*service.Routes[i].Name, *service.Routes[j].Name) > 0
-		})
-		content.Services = append(content.Services, service)
-	}
-	sort.SliceStable(content.Services, func(i, j int) bool {
-		return strings.Compare(*content.Services[i].Name, *content.Services[j].Name) > 0
-	})
-
-	for _, plugin := range k8sState.Plugins {
-		plugin := file.FPlugin{
-			Plugin: plugin.Plugin,
-		}
-		err = n.fillPlugin(ctx, &plugin)
-		if err != nil {
-			n.Logger.Errorf("failed to fill-in defaults for plugin: %s", *plugin.Name)
-		}
-		content.Plugins = append(content.Plugins, plugin)
-	}
-	sort.SliceStable(content.Plugins, func(i, j int) bool {
-		return strings.Compare(pluginString(content.Plugins[i]),
-			pluginString(content.Plugins[j])) > 0
-	})
-
-	for _, u := range k8sState.Upstreams {
-		n.fillUpstream(&u.Upstream)
-		upstream := file.FUpstream{Upstream: u.Upstream}
-		for _, t := range u.Targets {
-			target := file.FTarget{Target: t.Target}
-			upstream.Targets = append(upstream.Targets, &target)
-		}
-		sort.SliceStable(upstream.Targets, func(i, j int) bool {
-			return strings.Compare(*upstream.Targets[i].Target.Target, *upstream.Targets[j].Target.Target) > 0
-		})
-		content.Upstreams = append(content.Upstreams, upstream)
-	}
-	sort.SliceStable(content.Upstreams, func(i, j int) bool {
-		return strings.Compare(*content.Upstreams[i].Name, *content.Upstreams[j].Name) > 0
-	})
-
-	for _, c := range k8sState.Certificates {
-		cert := getFCertificateFromKongCert(c.Certificate)
-		content.Certificates = append(content.Certificates, cert)
-	}
-	sort.SliceStable(content.Certificates, func(i, j int) bool {
-		return strings.Compare(*content.Certificates[i].Cert, *content.Certificates[j].Cert) > 0
-	})
-
-	for _, c := range k8sState.CACertificates {
-		content.CACertificates = append(content.CACertificates,
-			file.FCACertificate{CACertificate: c})
-	}
-	sort.SliceStable(content.CACertificates, func(i, j int) bool {
-		return strings.Compare(*content.CACertificates[i].Cert, *content.CACertificates[j].Cert) > 0
-	})
-
-	for _, c := range k8sState.Consumers {
-		consumer := file.FConsumer{Consumer: c.Consumer}
-		for _, p := range c.Plugins {
-			consumer.Plugins = append(consumer.Plugins, &file.FPlugin{Plugin: p})
-		}
-
-		for _, v := range c.KeyAuths {
-			consumer.KeyAuths = append(consumer.KeyAuths, &v.KeyAuth)
-		}
-		for _, v := range c.HMACAuths {
-			consumer.HMACAuths = append(consumer.HMACAuths, &v.HMACAuth)
-		}
-		for _, v := range c.BasicAuths {
-			consumer.BasicAuths = append(consumer.BasicAuths, &v.BasicAuth)
-		}
-		for _, v := range c.JWTAuths {
-			consumer.JWTAuths = append(consumer.JWTAuths, &v.JWTAuth)
-		}
-		for _, v := range c.ACLGroups {
-			consumer.ACLGroups = append(consumer.ACLGroups, &v.ACLGroup)
-		}
-		for _, v := range c.Oauth2Creds {
-			consumer.Oauth2Creds = append(consumer.Oauth2Creds, &v.Oauth2Credential)
-		}
-		content.Consumers = append(content.Consumers, consumer)
-	}
-	sort.SliceStable(content.Consumers, func(i, j int) bool {
-		return strings.Compare(*content.Consumers[i].Username, *content.Consumers[j].Username) > 0
-	})
-	selectorTags := n.getIngressControllerTags()
-	if len(selectorTags) > 0 {
-		content.Info = &file.Info{
-			SelectorTags: selectorTags,
-		}
-	}
-
-	return &content
-}
-
-func getFCertificateFromKongCert(kongCert kong.Certificate) file.FCertificate {
-	var res file.FCertificate
-	if kongCert.ID != nil {
-		res.ID = kong.String(*kongCert.ID)
-	}
-	if kongCert.Key != nil {
-		res.Key = kong.String(*kongCert.Key)
-	}
-	if kongCert.Cert != nil {
-		res.Cert = kong.String(*kongCert.Cert)
-	}
-	res.SNIs = getSNIs(kongCert.SNIs)
-	return res
-}
-
-func getSNIs(names []*string) []kong.SNI {
-	var snis []kong.SNI
-	for _, name := range names {
-		snis = append(snis, kong.SNI{
-			Name: kong.String(*name),
-		})
-	}
-	return snis
-}
-
-func pluginString(plugin file.FPlugin) string {
-	result := ""
-	if plugin.Name != nil {
-		result = *plugin.Name
-	}
-	if plugin.Consumer != nil && plugin.Consumer.ID != nil {
-		result += *plugin.Consumer.ID
-	}
-	if plugin.Route != nil && plugin.Route.ID != nil {
-		result += *plugin.Route.ID
-	}
-	if plugin.Service != nil && plugin.Service.ID != nil {
-		result += *plugin.Service.ID
-	}
-	return result
-}
-
-func (n *KongController) fillRoute(route *kong.Route) {
-	if route.HTTPSRedirectStatusCode == nil {
-		route.HTTPSRedirectStatusCode = kong.Int(426)
-	}
-	if route.PathHandling == nil {
-		route.PathHandling = kong.String("v0")
-	}
-}
-
-func (n *KongController) fillUpstream(upstream *kong.Upstream) {
-	if upstream.Algorithm == nil {
-		upstream.Algorithm = kong.String("round-robin")
-	}
-}
-
-func (n *KongController) fillPlugin(ctx context.Context, plugin *file.FPlugin) error {
-	if plugin == nil {
-		return fmt.Errorf("plugin is nil")
-	}
-	if plugin.Name == nil || *plugin.Name == "" {
-		return fmt.Errorf("plugin doesn't have a name")
-	}
-	schema, err := n.PluginSchemaStore.Schema(ctx, *plugin.Name)
-	if err != nil {
-		return fmt.Errorf("error retrieveing schema for plugin %s: %w", *plugin.Name, err)
-	}
-	if plugin.Config == nil {
-		plugin.Config = make(kong.Configuration)
-	}
-	newConfig, err := fill(schema, plugin.Config)
-	if err != nil {
-		return fmt.Errorf("error filling in default for plugin %s: %w", *plugin.Name, err)
-	}
-	plugin.Config = newConfig
-	if plugin.RunOn == nil {
-		plugin.RunOn = kong.String("first")
-	}
-	if plugin.Enabled == nil {
-		plugin.Enabled = kong.Bool(true)
-	}
-	if len(plugin.Protocols) == 0 {
-		// TODO read this from the schema endpoint
-		plugin.Protocols = kong.StringSlice("http", "https")
-	}
-	plugin.RunOn = nil
-	return nil
 }

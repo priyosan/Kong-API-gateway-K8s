@@ -1,4 +1,4 @@
-package controller
+package deckgen
 
 import (
 	"context"
