@@ -30,8 +30,10 @@ _testmain.go
 .coverprofile
 /gover.coverprofile
 e2e-tests
-
+coverage.out
+coverage.out.tmp
 coverage.txt
+
 # for this repo only
 kong-ingress-controller
 
@@ -41,3 +43,6 @@ vendor
 # integration test residuals
 kind
 kubeconfig-test-cluster
+
+# ignore personal TODO lists
+TODO

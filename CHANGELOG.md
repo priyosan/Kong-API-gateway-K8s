@@ -1,5 +1,7 @@
 # Table of Contents
 
+ - [1.1.1](#111---20210107)
+ - [1.1.0](#110---20201209)
  - [1.0.0](#100---20201005)
  - [0.10.0](#0100---20200915)
  - [0.9.1](#091---20200608)
@@ -24,6 +26,54 @@
  - [0.0.5](#005---20180602)
  - [0.0.4 and prior](#004-and-prior)
 
+## [1.1.1] - 2021/01/07
+
+#### Fixed
+
+- Ingress controller now correctly sets ports for ExternalName services [#985](https://github.com/Kong/kubernetes-ingress-controller/pull/985)
+- TCPIngress CRD: removed the duplicated subresource YAML key [#997](https://github.com/Kong/kubernetes-ingress-controller/pull/997)
+
+#### Deprecated
+
+- Removed Helm 2 installation instructions because Helm 2 is EOL. Use Helm 3 instead. [#993](https://github.com/Kong/kubernetes-ingress-controller/pull/993)
+
+## [1.1.0] - 2020/12/09
+
+#### Breaking changes
+
+- The controller no longer supports Cassandra-backed Kong clusters, following
+  deprecation in 0.9.0. You must migrate to a Postgres-backed or DB-less
+  cluster before upgrading to 1.1.0. The controller will restore configuration
+  from Kubernetes resources (Ingresses, Services, KongPlugins, etc.) into the
+  new datastore automatically. Kong Enterprise users with
+  non-controller-managed configuration (Portal configuration, RBAC
+  configuration, etc.) will need to migrate that configuration manually.
+  [#974](https://github.com/Kong/kubernetes-ingress-controller/pull/974)
+
+#### Added
+
+- The default Kong version is now 2.2.x and the default Kong Enterprise version
+  is now 2.2.0.0.
+  [#932](https://github.com/Kong/kubernetes-ingress-controller/pull/932)
+  [#965](https://github.com/Kong/kubernetes-ingress-controller/pull/965)
+- The default worker count is now 2 instead of 1. This avoids request latency
+  during blocking configuration changes.
+  [#957](https://github.com/Kong/kubernetes-ingress-controller/pull/957)
+- Knative Services now support `konghq.com/override` (for attaching
+  KongIngress resources).
+  [#908](https://github.com/Kong/kubernetes-ingress-controller/pull/908)
+- Added the `konghq.com/snis` Ingress annotation. This populates SNI
+  configuration on the routes derived from the annotated Ingress.
+  [#863](https://github.com/Kong/kubernetes-ingress-controller/pull/863)
+
+#### Fixed
+
+- The controller now correctly prints the affected Service name when logging
+  warnings about Services without any endpoints.
+  [#915](https://github.com/Kong/kubernetes-ingress-controller/pull/915)
+- Credentials that lack critical fields no longer result in a panic.
+  [#944](https://github.com/Kong/kubernetes-ingress-controller/pull/944)
+
 ## [1.0.0] - 2020/10/05
 
 #### Breaking changes
@@ -38,7 +88,7 @@
   use `CONTROLLER_KONG_ADMIN_HEADER`.
   [#866](https://github.com/Kong/kubernetes-ingress-controller/pull/866)
 - KongCredential custom resources are no longer supported. You should convert
-  any KongCredential resources to [credential Secrets](https://github.com/Kong/kubernetes-ingress-controller/blob/next/docs/guides/using-consumer-credential-resource.md#provision-a-consumer)
+  any KongCredential resources to [credential Secrets](https://docs.konghq.com/kubernetes-ingress-controller/1.0.x/guides/using-consumer-credential-resource/#provision-a-consumer)
   before upgrading to 1.0.0.
   [#862](https://github.com/Kong/kubernetes-ingress-controller/pull/862)
 - Deprecated 0.x.x annotations are no longer supported. Please see [the
@@ -59,7 +109,7 @@
   created Kong configuration for that custom resource.
   [#824](https://github.com/Kong/kubernetes-ingress-controller/pull/824)
 - Version compatibility documentation now includes [information about supported
-  Kubernetes versions for a given controller version](https://github.com/Kong/kubernetes-ingress-controller/blob/main/docs/references/version-compatibility.md#kubernetes).
+  Kubernetes versions for a given controller version](https://docs.konghq.com/kubernetes-ingress-controller/1.0.x/references/version-compatibility/#kubernetes).
   [#820](https://github.com/Kong/kubernetes-ingress-controller/pull/820)
 
 #### Fixed
@@ -249,7 +299,7 @@ provided by other means in such architectures.
 
 #### Breaking changes
 
-- **`strip_path` disabled by default**  
+- **`strip_path` disabled by default**
   The value of `strip_path` of routes in Kong is now set to `false`.
   If you are upgrading from a previous version, please carefully test the change
   before rolling it out as this change can possibly break the routing
@@ -386,7 +436,7 @@ authentication, DB-less deployment by default and performance improvements.
   DB-less mode, should be reduced by an order of magnitude for most deployments.
   This will also improve Kong's performance.
   [#484](https://github.com/Kong/kubernetes-ingress-controller/pull/484)
-- `credentials` property has been added to the `KongConsumer` Custom Resource. 
+- `credentials` property has been added to the `KongConsumer` Custom Resource.
   This property holds the references to the secrets containing the credentials.
   [#430](https://github.com/Kong/kubernetes-ingress-controller/pull/430)
 - Flag `--kong-admin-filter-tag` has been added to change the tag used
@@ -904,6 +954,8 @@ Please read the changelog and test in your environment.
  - The initial versions  were rapildy iterated to deliver
    a working ingress controller.
 
+[1.1.1]: https://github.com/kong/kubernetes-ingress-controller/compare/1.1.0...1.1.1
+[1.1.0]: https://github.com/kong/kubernetes-ingress-controller/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/kong/kubernetes-ingress-controller/compare/0.10.0...1.0.0
 [0.10.0]: https://github.com/kong/kubernetes-ingress-controller/compare/0.9.1...0.10.0
 [0.9.1]: https://github.com/kong/kubernetes-ingress-controller/compare/0.9.0...0.9.1

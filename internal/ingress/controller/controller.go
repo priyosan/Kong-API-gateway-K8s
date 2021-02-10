@@ -23,16 +23,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/blang/semver"
 	"github.com/eapache/channels"
-	"github.com/kong/go-kong/kong"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/controller/parser"
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/election"
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/status"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/store"
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/task"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/utils"
 	configClientSet "github.com/kong/kubernetes-ingress-controller/pkg/client/configuration/clientset/versioned"
+	"github.com/kong/kubernetes-ingress-controller/pkg/parser"
+	"github.com/kong/kubernetes-ingress-controller/pkg/sendconfig"
+	"github.com/kong/kubernetes-ingress-controller/pkg/store"
+	"github.com/kong/kubernetes-ingress-controller/pkg/util"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	networking "k8s.io/api/networking/v1beta1"
@@ -44,26 +43,10 @@ import (
 	knativeClientSet "knative.dev/networking/pkg/client/clientset/versioned"
 )
 
-// Kong Represents a Kong client and connection information
-type Kong struct {
-	URL        string
-	FilterTags []string
-	// Headers are injected into every request to Kong's Admin API
-	// to help with authorization/authentication.
-	Client *kong.Client
-
-	InMemory      bool
-	HasTagSupport bool
-	Enterprise    bool
-
-	Version semver.Version
-
-	Concurrency int
-}
-
 // Configuration contains all the settings required by an Ingress controller
 type Configuration struct {
-	Kong
+	sendconfig.Kong
+
 	KongCustomEntitiesSecret string
 
 	KubeClient       clientset.Interface
@@ -86,7 +69,7 @@ type Configuration struct {
 	UpdateStatusOnShutdown bool
 	ElectionID             string
 
-	IngressAPI utils.IngressAPI
+	IngressAPI util.IngressAPI
 
 	EnableKnativeIngressSupport bool
 
@@ -143,7 +126,7 @@ func NewKongController(ctx context.Context,
 		updateCh: updateCh,
 
 		stopLock:          &sync.Mutex{},
-		PluginSchemaStore: *NewPluginSchemaStore(config.Kong.Client),
+		PluginSchemaStore: *util.NewPluginSchemaStore(config.Kong.Client),
 
 		Logger: config.Logger,
 	}
@@ -228,7 +211,7 @@ type KongController struct {
 
 	store store.Storer
 
-	PluginSchemaStore PluginSchemaStore
+	PluginSchemaStore util.PluginSchemaStore
 
 	Logger logrus.FieldLogger
 }

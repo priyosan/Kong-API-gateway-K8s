@@ -39,10 +39,12 @@ import (
 	"github.com/kong/go-kong/kong"
 	"github.com/kong/kubernetes-ingress-controller/internal/admission"
 	"github.com/kong/kubernetes-ingress-controller/internal/ingress/controller"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/store"
-	"github.com/kong/kubernetes-ingress-controller/internal/ingress/utils"
+	configuration "github.com/kong/kubernetes-ingress-controller/pkg/apis/configuration/v1"
 	configclientv1 "github.com/kong/kubernetes-ingress-controller/pkg/client/configuration/clientset/versioned"
 	configinformer "github.com/kong/kubernetes-ingress-controller/pkg/client/configuration/informers/externalversions"
+	"github.com/kong/kubernetes-ingress-controller/pkg/sendconfig"
+	"github.com/kong/kubernetes-ingress-controller/pkg/store"
+	"github.com/kong/kubernetes-ingress-controller/pkg/util"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -81,7 +83,7 @@ var (
 
 func controllerConfigFromCLIConfig(cliConfig cliConfig) controller.Configuration {
 	return controller.Configuration{
-		Kong: controller.Kong{
+		Kong: sendconfig.Kong{
 			URL:         cliConfig.KongAdminURL,
 			FilterTags:  cliConfig.KongAdminFilterTags,
 			Concurrency: cliConfig.KongAdminConcurrency,
@@ -166,7 +168,7 @@ func main() {
 
 	if cliConfig.PublishService != "" {
 		svc := cliConfig.PublishService
-		ns, name, err := utils.ParseNameNS(svc)
+		ns, name, err := util.ParseNameNS(svc)
 		if err != nil {
 			log.Fatalf(invalidConfErrPrefix+"publish-service: %v", err)
 		}
@@ -282,8 +284,8 @@ func main() {
 		controllerConfig.Kong.InMemory = true
 	}
 	if kongDB == "cassandra" {
-		log.Warn("running controller with kong cassandra as a datastore is deprecated; " +
-			"please consider using postgres or in-memory mode")
+		log.Fatalf("Cassandra-backed deployments of Kong managed by the ingress controller are no longer supported;" +
+			"you must migrate to a Postgres-backed or DB-less deployment")
 	}
 
 	req, _ := http.NewRequest("GET",
@@ -344,17 +346,17 @@ func main() {
 		UpdateCh: updateChannel,
 	}
 
-	var preferredIngressAPIs []utils.IngressAPI
+	var preferredIngressAPIs []util.IngressAPI
 	if !cliConfig.DisableIngressNetworkingV1 {
-		preferredIngressAPIs = append(preferredIngressAPIs, utils.NetworkingV1)
+		preferredIngressAPIs = append(preferredIngressAPIs, util.NetworkingV1)
 	}
 	if !cliConfig.DisableIngressNetworkingV1beta1 {
-		preferredIngressAPIs = append(preferredIngressAPIs, utils.NetworkingV1beta1)
+		preferredIngressAPIs = append(preferredIngressAPIs, util.NetworkingV1beta1)
 	}
 	if !cliConfig.DisableIngressExtensionsV1beta1 {
-		preferredIngressAPIs = append(preferredIngressAPIs, utils.ExtensionsV1beta1)
+		preferredIngressAPIs = append(preferredIngressAPIs, util.ExtensionsV1beta1)
 	}
-	controllerConfig.IngressAPI, err = utils.NegotiateResourceAPI(kubeClient, "Ingress", preferredIngressAPIs)
+	controllerConfig.IngressAPI, err = util.NegotiateResourceAPI(kubeClient, "Ingress", preferredIngressAPIs)
 	if err != nil {
 		log.Fatalf("NegotiateIngressAPI failed: %v, tried: %+v", err, preferredIngressAPIs)
 	}
@@ -365,15 +367,15 @@ func main() {
 
 	var ingInformer cache.SharedIndexInformer
 	switch controllerConfig.IngressAPI {
-	case utils.NetworkingV1:
+	case util.NetworkingV1:
 		ingInformer = coreInformerFactory.Networking().V1().Ingresses().Informer()
 		cacheStores.IngressV1 = ingInformer.GetStore()
 		cacheStores.IngressV1beta1 = newEmptyStore()
-	case utils.NetworkingV1beta1:
+	case util.NetworkingV1beta1:
 		ingInformer = coreInformerFactory.Networking().V1beta1().Ingresses().Informer()
 		cacheStores.IngressV1 = newEmptyStore()
 		cacheStores.IngressV1beta1 = ingInformer.GetStore()
-	case utils.ExtensionsV1beta1:
+	case util.ExtensionsV1beta1:
 		ingInformer = coreInformerFactory.Extensions().V1beta1().Ingresses().Informer()
 		cacheStores.IngressV1 = newEmptyStore()
 		cacheStores.IngressV1beta1 = ingInformer.GetStore()
@@ -413,10 +415,21 @@ func main() {
 	cacheStores.Plugin = kongPluginInformer.GetStore()
 	informers = append(informers, kongPluginInformer)
 
-	kongClusterPluginInformer := kongInformerFactory.Configuration().V1().KongClusterPlugins().Informer()
-	kongClusterPluginInformer.AddEventHandler(reh)
-	cacheStores.ClusterPlugin = kongClusterPluginInformer.GetStore()
-	informers = append(informers, kongClusterPluginInformer)
+	hasKongClusterPlugin, err := util.ServerHasGVK(kubeClient.Discovery(),
+		configuration.SchemeGroupVersion.String(), "KongClusterPlugin")
+
+	if hasKongClusterPlugin {
+		kongClusterPluginInformer := kongInformerFactory.Configuration().V1().KongClusterPlugins().Informer()
+		kongClusterPluginInformer.AddEventHandler(reh)
+		cacheStores.ClusterPlugin = kongClusterPluginInformer.GetStore()
+		informers = append(informers, kongClusterPluginInformer)
+	} else {
+		if err != nil {
+			log.Fatalf("failed to retrieve KongClusterPlugin availability: %s", err)
+		}
+		log.Warn("KongClusterPlugin CRD not detected. Disabling KongClusterPlugin functionality.")
+		cacheStores.ClusterPlugin = newEmptyStore()
+	}
 
 	kongConsumerInformer := kongInformerFactory.Configuration().V1().KongConsumers().Informer()
 	kongConsumerInformer.AddEventHandler(reh)
@@ -473,7 +486,7 @@ func main() {
 		if err != nil {
 			logger.Warnf("failed to fetch k8s api-server version: %v", err)
 		}
-		info := utils.Info{
+		info := util.Info{
 			KongVersion:       root["version"].(string),
 			KICVersion:        RELEASE,
 			KubernetesVersion: k8sVersion.String(),
@@ -481,7 +494,7 @@ func main() {
 			ID:                uuid,
 			KongDB:            kongDB,
 		}
-		reporter := utils.Reporter{
+		reporter := util.Reporter{
 			Info:   info,
 			Logger: logger,
 		}

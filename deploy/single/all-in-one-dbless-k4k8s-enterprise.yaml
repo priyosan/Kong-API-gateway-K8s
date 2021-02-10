@@ -196,6 +196,14 @@ spec:
               type: array
             regex_priority:
               type: integer
+            request_buffering:
+              type: boolean
+            response_buffering:
+              type: boolean
+            snis:
+              items:
+                type: string
+              type: array
             strip_path:
               type: boolean
         upstream:
@@ -635,14 +643,14 @@ spec:
         - name: KONG_DATABASE
           value: "off"
         - name: KONG_NGINX_WORKER_PROCESSES
-          value: "1"
+          value: "2"
         - name: KONG_ADMIN_ACCESS_LOG
           value: /dev/stdout
         - name: KONG_ADMIN_ERROR_LOG
           value: /dev/stderr
         - name: KONG_PROXY_ERROR_LOG
           value: /dev/stderr
-        image: kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.1.4.0-alpine
+        image: kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.2.0.0-alpine
         lifecycle:
           preStop:
             exec:
@@ -698,7 +706,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
-        image: kong-docker-kubernetes-ingress-controller.bintray.io/kong-ingress-controller:1.0
+        image: kong-docker-kubernetes-ingress-controller.bintray.io/kong-ingress-controller:1.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

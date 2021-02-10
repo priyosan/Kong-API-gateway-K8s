@@ -1,11 +1,12 @@
 REGISTRY?=kong-docker-kubernetes-ingress-controller.bintray.io
-TAG?=1.0.0
+TAG?=1.1.1
 REPO_INFO=$(shell git config --get remote.origin.url)
 IMGNAME?=kong-ingress-controller
 IMAGE = $(REGISTRY)/$(IMGNAME)
 # only for dev
 DB?=false
 RUN_VERSION?=20
+KUBE_VERSION?=v1.20.2
 
 ifndef COMMIT
   COMMIT := $(shell git rev-parse --short HEAD)
@@ -20,8 +21,15 @@ test-all: lint test
 test:
 	go test -race ./...
 
+.PHONY: coverage
+coverage:
+	go test -race -v -count=1 -coverprofile=coverage.out.tmp ./...
+	# ignoring generated code for coverage
+	grep -E -v 'pkg/apis/|pkg/client/|generated.go|generated.deepcopy.go' coverage.out.tmp > coverage.out
+	rm -f coverage.out.tmp
+
 .PHONY: lint
-lint:
+lint: verify-tidy
 	golangci-lint run ./...
 
 .PHONY: build
@@ -40,6 +48,10 @@ verify-codegen:
 update-codegen:
 	./hack/update-codegen.sh
 
+.PHONY: verify-tidy
+verify-tidy:
+	./hack/verify-tidy.sh
+
 .PHONY: container
 container:
 	docker build \
@@ -51,9 +63,10 @@ container:
 run:
 	./hack/dev/start.sh ${DB} ${RUN_VERSION}
 
+
 .PHONY: integration-test
 integration-test: container
-	KIC_IMAGE="${IMAGE}:${TAG}" ./test/integration/test.sh
+	KIC_IMAGE="${IMAGE}:${TAG}" KUBE_VERSION=${KUBE_VERSION} ./test/integration/test.sh
 
 .PHONY: delve-container
 delve-container:
