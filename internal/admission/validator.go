@@ -2,6 +2,7 @@ package admission
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -60,9 +61,14 @@ func (validator KongHTTPValidator) ValidatePlugin(
 		return false, "plugin name cannot be empty", nil
 	}
 	var plugin kong.Plugin
+	var configuration kong.Configuration
 	plugin.Name = kong.String(k8sPlugin.PluginName)
-	if k8sPlugin.Config != nil {
-		plugin.Config = kong.Configuration(k8sPlugin.Config)
+	if k8sPlugin.Config.Raw != nil {
+		err := json.Unmarshal(k8sPlugin.Config.Raw, &configuration)
+		if err != nil {
+			return false, "", fmt.Errorf("could not unmarshal plugin configuration: %s", err)
+		}
+		plugin.Config = configuration
 	}
 	if k8sPlugin.RunOn != "" {
 		plugin.RunOn = kong.String(k8sPlugin.RunOn)
